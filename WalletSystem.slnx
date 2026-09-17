@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/frontend/" />
+  <Folder Name="/frontend/wallet-dashboard/" />
+  <Folder Name="/frontend/wallet-dashboard/src/" />
   <Folder Name="/src/" />
   <Folder Name="/src/WalletSystem.Api/">
     <Project Path="WalletSystem.Api/WalletSystem.Api.csproj" />
@@ -12,4 +15,8 @@
   <Folder Name="/src/WalletSystem.Infrastructure/">
     <Project Path="WalletSystem.Infrastructure/WalletSystem.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/WalletSystem.Worker/">
+    <Project Path="WalletSystem.Worker/WalletSystem.Worker.csproj" Id="4754af0f-acd7-4360-8ac8-7f020e5b513e" />
+  </Folder>
+  <Folder Name="/tests/" />  
 </Solution>
