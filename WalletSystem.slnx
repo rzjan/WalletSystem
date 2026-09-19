@@ -18,5 +18,7 @@
   <Folder Name="/src/WalletSystem.Worker/">
     <Project Path="WalletSystem.Worker/WalletSystem.Worker.csproj" Id="4754af0f-acd7-4360-8ac8-7f020e5b513e" />
   </Folder>
-  <Folder Name="/tests/" />  
+  <Folder Name="/tests/">
+    <Project Path="WalletSystems.UnitTest/WalletSystems.UnitTest.csproj" Id="03a883f5-3b50-475b-beed-5b5bca6bd87c" />
+  </Folder>  
 </Solution>
