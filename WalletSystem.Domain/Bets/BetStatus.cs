@@ -2,8 +2,8 @@
 
 public enum BetStatus
 {
-    Placed = 1,
-    Won = 2,
-    Lost = 3,
-    Cancelled = 4
+    Placed = 1, //Apuesta realizada
+    Won = 2, // Apuesta ganada
+    Lost = 3, //Apuesta perdida
+    Cancelled = 4 //Apuesta cancelada
 }
