@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace WalletSystem.Application.Common.Interfaces;
 
-namespace WalletSystem.Application.Common.Interfaces
+public interface IPaymentProviderClient
 {
-    internal interface IPaymentProviderClient
-    {
-    }
+    Task<PaymentProviderResult> ChargeAsync(
+        decimal amount,
+        string currency,
+        string idempotencyKey,
+        CancellationToken cancellationToken
+        );
 }
+public record PaymentProviderResult(bool IsSuccess, string? ExternalTransactionId, string? ErrorMessage);

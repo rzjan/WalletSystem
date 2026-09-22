@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace WalletSystem.Application.Common.Interfaces;
 
-namespace WalletSystem.Application.Common.Interfaces
+public interface IOutboxWriter
 {
-    internal interface IOutboxWriter
-    {
-    }
+    Task WriteAsync(string eventType, object payload, CancellationToken cancellation);
 }
