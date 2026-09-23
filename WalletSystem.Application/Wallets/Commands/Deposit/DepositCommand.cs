@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
 
-namespace WalletSystem.Application.Wallets.Commands.Deposit
-{
-    internal class DepositCommand
-    {
-    }
-}
+namespace WalletSystem.Application.Wallets.Commands.Deposit;
+
+
+public record DepositCommand(
+    Guid WalletID,
+    decimal Amount,
+    string Currency,
+    string IdempotencyKey) : IRequest<DepositResult>;
+
+
+public record DepositResult(Guid TransactionId, decimal NewBalance, string Status);

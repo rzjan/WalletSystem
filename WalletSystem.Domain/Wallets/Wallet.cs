@@ -1,8 +1,9 @@
 ﻿using WalletSystem.Domain.Common;
+using WalletSystem.Domain.Wallets.Events;
 
 namespace WalletSystem.Domain.Wallets;
 
-public class Wallet
+public class Wallet:Entity
 {
     private readonly List<WalletTransaction> _transactions = new ();
 
@@ -72,6 +73,10 @@ public class Wallet
             if (!Balance.IsGeaterThanOrEqualTo(amount))
             {
                 transaction.MarkAsFailed("Fondos insuficientes");
+
+                RaiseDomainEvent(new WalletTransactionFailedEvent(
+                        transaction.Id, Id, "Fondos insuficientes."));
+
                 return Result.Failure<WalletTransaction>("Fondos insuficientes");
             }
 
@@ -83,6 +88,11 @@ public class Wallet
         }
 
         transaction.MarkAsCompleted();
+
+        RaiseDomainEvent(new WalletTransactionCompletedEvent(
+                    transaction.Id, Id, amount.Amount, amount.Currency, type, Balance.Amount
+            ));
+
         return Result.Success(transaction);
     }
 }

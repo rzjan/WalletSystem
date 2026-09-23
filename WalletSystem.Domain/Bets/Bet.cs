@@ -1,8 +1,10 @@
-﻿using WalletSystem.Domain.Common;
+﻿using System.Threading.Tasks.Dataflow;
+using WalletSystem.Domain.Bets.Events;
+using WalletSystem.Domain.Common;
 
 namespace WalletSystem.Domain.Bets;
 
-public class Bet
+public class Bet: Entity
 {
     public Guid Id { get; set; }
     public Guid WalletID { get; private set; }
@@ -47,7 +49,13 @@ public class Bet
         if (string.IsNullOrWhiteSpace(idempotencyKey))
             return Result.Failure<Bet>("La clave de idempotencia es requerida");
 
-        return Result.Success(new Bet(walletId, stake, odds, idempotencyKey));
+        var bet = new Bet(walletId, stake, odds, idempotencyKey);
+        bet.RaiseDomainEvent(new BetPlacedEvent(
+                                bet.Id, walletId, 
+                                stake.Amount, stake.Currency, 
+                                odds.Value));
+
+        return Result.Success(bet);
     }
 
     //Marcar como ganado
@@ -59,6 +67,10 @@ public class Bet
         Status = BetStatus.Won;
         Payout = Odds.CaculatePayout(Stake);
         SettledAt = DateTime.UtcNow;
+
+        RaiseDomainEvent(new BetSettledEvent(
+                    Id, WalletID, Status, 
+                    Payout.Amount, Payout.Currency));
 
         return Result.Success();
     }
@@ -73,6 +85,10 @@ public class Bet
         Payout = Money.Zero(Stake.Currency); //Pago
         SettledAt = DateTime.UtcNow;
 
+        RaiseDomainEvent(new BetSettledEvent(
+                    Id, WalletID, Status,
+                    Payout.Amount, Payout.Currency));
+
         return Result.Success();
     }
 
@@ -86,6 +102,8 @@ public class Bet
 
         Status = BetStatus.Cancelled;
         SettledAt = DateTime.UtcNow; //Fecha Liquidado o de operación
+
+        RaiseDomainEvent(new BetCancelledEvent(Id, WalletID));
 
         return Result.Success();
     }
