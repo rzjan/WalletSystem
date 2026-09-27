@@ -1,5 +1,6 @@
 ﻿using WalletSystem.Domain.Common;
 using WalletSystem.Domain.Wallets;
+using WalletSystem.Domain.Wallets.Events;
 
 namespace WalletSystems.UnitTest.Domain;
 
@@ -18,7 +19,7 @@ public class WalletTests
     }
 
     [Fact]
-    public void Deposit_WithValidAmount_IncreaseBalance() 
+    public void Deposit_WithValidAmount_IncreaseBalance()
     {
         var wallet = CreateWallet();
         var amount = Money.Create(100, "ARS").Value;
@@ -30,7 +31,7 @@ public class WalletTests
     }
 
     [Fact]
-    public void Withdraw_WithInsuficientFunds_ReturnsFailureAndDoesNotChangeBalance() 
+    public void Withdraw_WithInsuficientFunds_ReturnsFailureAndDoesNotChangeBalance()
     {
         var wallet = CreateWallet(initialBalance: 50);
         var amount = Money.Create(100, "ARS").Value;
@@ -43,22 +44,22 @@ public class WalletTests
     }
 
     [Fact]
-    public void WithDraw_WithInsuficientFunds_RecordsFailedTransaction() 
+    public void WithDraw_WithInsuficientFunds_RecordsFailedTransaction()
     {
         var wallet = CreateWallet(initialBalance: 50);
-        var amount = Money.Create(100,"ARS").Value;
+        var amount = Money.Create(100, "ARS").Value;
 
         wallet.Withdraw(amount, "key-3");
 
-        var transaction = wallet.Transactions.Single(t=>t.IdempotencyKey == "key-3");
+        var transaction = wallet.Transactions.Single(t => t.IdempotencyKey == "key-3");
         Assert.Equal(TransactionStatus.Failed, transaction.Status);
     }
 
     [Fact]
-    public void Applytransaction_withSameIdempotencyKeyTwice_AppliesOnlyOnce() 
+    public void Applytransaction_withSameIdempotencyKeyTwice_AppliesOnlyOnce()
     {
         var wallet = CreateWallet();
-        var amount = Money.Create(100,"ARS").Value;
+        var amount = Money.Create(100, "ARS").Value;
 
         wallet.Deposit(amount, "key-4");
         wallet.Deposit(amount, "key-4"); //Mismo key se reintenta
@@ -68,19 +69,19 @@ public class WalletTests
     }
 
     [Fact]
-    public void ApplyTransaction_withSaameIdempotencyKeyTwice_ReturnsSameTransactionOnSecondCall() 
+    public void ApplyTransaction_withSaameIdempotencyKeyTwice_ReturnsSameTransactionOnSecondCall()
     {
         var wallet = CreateWallet();
         var amount = Money.Create(100, "ARS").Value;
 
-        var first =  wallet.Deposit(amount, "key-5");
+        var first = wallet.Deposit(amount, "key-5");
         var second = wallet.Deposit(amount, "key-5");
 
         Assert.Equal(first.Value.Id, second.Value.Id);
     }
 
     [Fact]
-    public void DebitForBet_WithSufficientFunds_DecreasesBalance() 
+    public void DebitForBet_WithSufficientFunds_DecreasesBalance()
     {
         var wallet = CreateWallet();
         var stake = Money.Create(50, "ARS").Value;
@@ -91,9 +92,9 @@ public class WalletTests
         Assert.Equal(150, wallet.Balance.Amount);
         Assert.Equal(TransactionType.BetPlaced, result.Value.Type);
     }
-    
+
     [Fact]
-    public void CreditPrize_AddsToBalance() 
+    public void CreditPrize_AddsToBalance()
     {
         var wallet = CreateWallet(initialBalance: 100);
         var prize = Money.Create(250, "ARS").Value;
@@ -102,6 +103,60 @@ public class WalletTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(350, wallet.Balance.Amount);
+    }
+
+    [Fact]
+    public void Deposit_WithValidAmount_RaisesWalletTransactionCompletedEvent()
+    {
+        var wallet = CreateWallet();
+        var amount = Money.Create(100, "ARS").Value;
+
+        wallet.Deposit(amount, "key-evt-1");
+
+        var domainEvent = Assert.Single(wallet.DomainEvents);
+        var completedEvent = Assert.IsType<WalletTransactionCompletedEvent>(domainEvent);
+
+        Assert.Equal(100, completedEvent.Amount);
+        Assert.Equal(100, completedEvent.NewBalance);
+        Assert.Equal(TransactionType.Deposit, completedEvent.Type);
+    }
+
+    [Fact]
+    public void WithDraw_WithInsufficientFunds_RaisesWalletTransactionFailedEvent()
+    {
+        var wallet = CreateWallet(initialBalance: 50);
+        var amount = Money.Create(100, "ARS").Value;
+
+        wallet.Withdraw(amount, "key-ect-2");
+
+        var domainEvent = Assert.Single(wallet.DomainEvents);
+        var failedEvent = Assert.IsType<WalletTransactionFailedEvent>(domainEvent);
+
+        Assert.Equal("Fondo insificientes.", failedEvent.Reason);
+    }
+
+    [Fact]
+    public void ApplyTransaction_WithSameIdempotencyKeyTwice_DoesNotRaiseEventTwice()
+    {
+        var wallet = CreateWallet();
+        var amount = Money.Create(100, "ARS").Value;
+
+        wallet.Deposit(amount, "key-evt-3");
+        wallet.Deposit(amount, "key-evt-3"); // mismo key
+
+        Assert.Single(wallet.DomainEvents); // no dos eventos, uno solo
+    }
+
+    [Fact]
+    public void ClearDomainEvents_RemovesAllPendingEvents()
+    {
+        var wallet = CreateWallet();
+        var amount = Money.Create(100, "ARS").Value;
+        wallet.Deposit(amount, "key-evt-4");
+
+        wallet.ClearDomainEvents();
+
+        Assert.Empty(wallet.DomainEvents);
     }
 
 }

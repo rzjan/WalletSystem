@@ -1,4 +1,5 @@
 ﻿using WalletSystem.Domain.Bets;
+using WalletSystem.Domain.Bets.Events;
 using WalletSystem.Domain.Common;
 
 namespace WalletSystems.UnitTest.Domain;
@@ -111,5 +112,54 @@ public class BetTest
         bet.MarkAsWon();
 
         Assert.NotNull(bet.SettledAt);
+    }
+
+    [Fact]
+    public void Place_WithValidData_RaisesBetPlacedEvent()
+    {
+        var bet = Bet.Place(Guid.NewGuid(), Stake(100), FixedOdds(2.5m), "bet-evt-1").Value;
+
+        var domainEvent = Assert.Single(bet.DomainEvents);
+        var placedEvent = Assert.IsType<BetPlacedEvent>(domainEvent);
+        Assert.Equal(100, placedEvent.Stake);
+        Assert.Equal(2.5m, placedEvent.Odds);
+    }
+
+    [Fact]
+    public void MarkAsWon_RaisesBetSettledEventWithCorrectPayout()
+    {
+        var bet = Bet.Place(Guid.NewGuid(), Stake(100), FixedOdds(2.5m), "bet-evt-2").Value;
+        bet.ClearDomainEvents(); // limpio el de Place para aislar el de MarkAsWon
+
+        bet.MarkAsWon();
+
+        var domainEvent = Assert.Single(bet.DomainEvents);
+        var settledEvent = Assert.IsType<BetSettledEvent>(domainEvent);
+        Assert.Equal(BetStatus.Won, settledEvent.Result);
+        Assert.Equal(250, settledEvent.PayoutAmount);
+    }
+
+    [Fact]
+    public void MarkAsLost_RaisesBetSettledEventWithZeroPayout()
+    {
+        var bet = Bet.Place(Guid.NewGuid(), Stake(100), FixedOdds(2.5m), "bet-evt-3").Value;
+        bet.ClearDomainEvents();
+
+        bet.MarkAsLost();
+
+        var settledEvent = Assert.IsType<BetSettledEvent>(Assert.Single(bet.DomainEvents));
+        Assert.Equal(BetStatus.Lost, settledEvent.Result);
+        Assert.Equal(0, settledEvent.PayoutAmount);
+    }
+
+    [Fact]
+    public void Cancel_RaisesBetCancelledEvent()
+    {
+        var bet = Bet.Place(Guid.NewGuid(), Stake(), FixedOdds(), "bet-evt-4").Value;
+        bet.ClearDomainEvents();
+
+        bet.Cancel();
+
+        Assert.IsType<BetCancelledEvent>(Assert.Single(bet.DomainEvents));
     }
 }
