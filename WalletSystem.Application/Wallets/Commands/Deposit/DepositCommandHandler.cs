@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using System.Security.AccessControl;
 using WalletSystem.Application.Common.Interfaces;
 using WalletSystem.Domain.Common;
 
@@ -8,21 +7,18 @@ namespace WalletSystem.Application.Wallets.Commands.Deposit;
 public class DepositCommandHandler : IRequestHandler<DepositCommand, DepositResult>
 {
     private readonly IWalletRepository _walletRepository;
-    private readonly IOutboxWriter _outboxWriter;
     private readonly IUnitOfWork _unitOfWork;
 
     public DepositCommandHandler(
-            IWalletRepository walletRepository, 
-            IOutboxWriter outboxWriter, 
+            IWalletRepository walletRepository,
             IUnitOfWork unitOfWork)
     {
         _walletRepository = walletRepository;
-        _outboxWriter = outboxWriter;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<DepositResult> Handle(
-            DepositCommand request, 
+            DepositCommand request,
             CancellationToken cancellationToken)
     {
         //Obtiene la billetera (Wallet) existente
@@ -38,25 +34,10 @@ public class DepositCommandHandler : IRequestHandler<DepositCommand, DepositResu
         var depositResult = wallet.Deposit(amountResult.Value, request.IdempotencyKey);
         if (!depositResult.IsSuccess)
             throw new InvalidOperationException(depositResult.Error);
-
-
-        var transaction = depositResult.Value;
-
-        await _outboxWriter.WriteAsync(
-            eventType: "WalletTransactionCompleted",
-            payload: new 
-            {
-                TransactionId = transaction.Id,
-                WalletId = wallet.Id,
-                Amount = transaction.Amount,
-                Currency = transaction.Amount.Currency,
-                Type = transaction.Type.ToString(),
-                OcurredAt = transaction.CompletedAt
-            },
-            cancellationToken);
-
+        
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        var transaction = depositResult.Value;
         return new DepositResult(transaction.Id, wallet.Balance.Amount, transaction.Status.ToString());
     }
 }
