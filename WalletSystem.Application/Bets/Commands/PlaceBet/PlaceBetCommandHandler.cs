@@ -6,7 +6,7 @@ using WalletSystem.Domain.Common;
 
 namespace WalletSystem.Application.Bets.Commands.PlaceBet;
 
-public class PlaceBetCommandHandler:IRequestHandler<PlaceBetCommand, PlateBetResult>
+public class PlaceBetCommandHandler:IRequestHandler<PlaceBetCommand, PlaceBetResult>
 {
     private readonly IWalletRepository _walletRepository;
     private readonly IBetRepository _betRepository;
@@ -21,7 +21,14 @@ public class PlaceBetCommandHandler:IRequestHandler<PlaceBetCommand, PlateBetRes
 
     public async Task<PlaceBetResult> Handle(PlaceBetCommand request, CancellationToken cancellationToken)
     {
-        //1 Cargar el primer aggregate
+        // 0) Idempotencia a nivel de caso de uso: Si esta apuesta ua se colocó, devolvemos el mismo resultado.
+        var existingBet = await _betRepository.GetIdempotencyKey(request.IdempotencyKey, cancellationToken);
+        if (existingBet is not null)
+        {
+            var existingWallet = await _walletRepository.GetByIdAsync(existingBet.WalletID, cancellationToken);
+            return new PlaceBetResult(existingBet.Id, existingWallet!.Balance.Amount, existingBet.Status.ToString());
+        }
+        // 1) Cargar el primer aggregate
         var wallet = await _walletRepository.GetByIdAsync(request.WalletId, cancellationToken)
             ?? throw new KeyNotFoundException($"Wallet {request.WalletId} no encontrada.");
 
