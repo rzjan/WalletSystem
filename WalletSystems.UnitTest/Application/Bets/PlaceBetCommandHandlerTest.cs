@@ -28,7 +28,7 @@ public class PlaceBetCommandHandlerTest
         var command = new PlaceBetCommand(wallet.Id, 100, "ARS", 2.5m, "bet-key-1");
 
 
-        _betRepository.GetByIdempotencyKeyAsync("bet-key-1", Arg.Any<CancellationToken>())
+        _betRepository.GetByIdempotencyKeyAsync(wallet.Id, "bet-key-1", Arg.Any<CancellationToken>())
             .Returns((Bet?)null);
 
         _walletRepository.GetByIdAsync(wallet.Id, Arg.Any<CancellationToken>())
@@ -52,7 +52,7 @@ public class PlaceBetCommandHandlerTest
 
         var command = new PlaceBetCommand(wallet.Id, 100, "ARS", 2.5m, "bet-key-2");
 
-        _betRepository.GetByIdempotencyKeyAsync("bet-key-2", Arg.Any<CancellationToken>())
+        _betRepository.GetByIdempotencyKeyAsync(wallet.Id, "bet-key-2", Arg.Any<CancellationToken>())
             .Returns(existingBet);
         _walletRepository.GetByIdAsync(wallet.Id, Arg.Any<CancellationToken>())
             .Returns(wallet);
@@ -74,7 +74,7 @@ public class PlaceBetCommandHandlerTest
 
         var command = new PlaceBetCommand(wallet.Id, 100, "ARS", 2.5m, "bet-key-3");
 
-        _betRepository.GetByIdempotencyKeyAsync("bet-key-3", Arg.Any<CancellationToken>())
+        _betRepository.GetByIdempotencyKeyAsync(wallet.Id, "bet-key-3", Arg.Any<CancellationToken>())
             .Returns((Bet?)null);
         _walletRepository.GetByIdAsync(wallet.Id, Arg.Any<CancellationToken>())
             .Returns(wallet);

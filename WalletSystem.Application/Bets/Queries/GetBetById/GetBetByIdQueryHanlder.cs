@@ -3,30 +3,19 @@ using WalletSystem.Application.Common.Interfaces;
 
 namespace WalletSystem.Application.Bets.Queries.GetBetById;
 
-public class GetBetByIdQueryHanlder: IRequestHandler<GetBetByIdQuery, GetBetByIdQueryResult>
+public class GetBetByIdQueryHanlder : IRequestHandler<GetBetByIdQuery, GetBetByIdQueryResult>
 {
-    readonly IBetRepository _betRepository;
 
-    public GetBetByIdQueryHanlder(IBetRepository betRepository)
+    private readonly IBetReadService _readService;
+
+    public GetBetByIdQueryHanlder(IBetReadService readService)
     {
-        _betRepository = betRepository;
+        _readService = readService;
     }
 
     public async Task<GetBetByIdQueryResult> Handle(GetBetByIdQuery request, CancellationToken cancellationToken)
     {
-        var bet = await _betRepository.GetByIdAsync(request.BetId, cancellationToken)
+        return await _readService.GetByIdAsync(request.BetId, cancellationToken)
             ?? throw new KeyNotFoundException($"Bet {request.BetId} no encontrada.");
-
-        return new GetBetByIdQueryResult(
-            bet.Id,
-            bet.WalletID,
-            bet.Stake.Amount,
-            bet.Odds.Value,
-            bet.Status.ToString(),
-            bet.Payout?.Amount,
-            bet.PlacedAt,
-            bet.SettledAt
-            );
-
     }
 }

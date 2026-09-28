@@ -21,8 +21,9 @@ public class PlaceBetCommandHandler:IRequestHandler<PlaceBetCommand, PlaceBetRes
 
     public async Task<PlaceBetResult> Handle(PlaceBetCommand request, CancellationToken cancellationToken)
     {
-        // 0) Idempotencia a nivel de caso de uso: Si esta apuesta ua se colocó, devolvemos el mismo resultado.
-        var existingBet = await _betRepository.GetByIdempotencyKeyAsync(request.IdempotencyKey, cancellationToken);
+        // 0) Idempotencia a nivel de caso de uso: Si esta apuesta ua se colocó, devolvemos el mismo resultado.                
+        var existingBet = await _betRepository.GetByIdempotencyKeyAsync(
+            request.WalletId, request.IdempotencyKey, cancellationToken);
         if (existingBet is not null)
         {
             var existingWallet = await _walletRepository.GetByIdAsync(existingBet.WalletID, cancellationToken);

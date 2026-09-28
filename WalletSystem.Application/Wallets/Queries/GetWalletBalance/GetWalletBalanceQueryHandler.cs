@@ -1,22 +1,20 @@
 ﻿using MediatR;
-using Microsoft.IdentityModel.Tokens.Experimental;
 using WalletSystem.Application.Common.Interfaces;
 
 namespace WalletSystem.Application.Wallets.Queries.GetWalletBalance;
 
-public class GetWalletBalanceQueryHandler:IRequestHandler<GetWalletBalanceQuery, GetWalletBalanceResult>
+public class GetWalletBalanceQueryHandler : IRequestHandler<GetWalletBalanceQuery, GetWalletBalanceResult>
 {
-    private readonly IWalletRepository _walletRepository;
+    private readonly IWalletReadService _readService;
 
-    public GetWalletBalanceQueryHandler(IWalletRepository walletRepository)
+    public GetWalletBalanceQueryHandler(IWalletReadService readService)
     {
-        _walletRepository = walletRepository;
+        _readService = readService;
     }
 
     public async Task<GetWalletBalanceResult> Handle(GetWalletBalanceQuery request, CancellationToken cancellationToken)
     {
-        var wallet = await _walletRepository.GetByIdAsync(request.WalletId, cancellationToken)
-            ?? throw new KeyNotFoundException($"Wallet {request.WalletId} no encontrada.");
-        return new GetWalletBalanceResult(wallet.Id, wallet.Balance.Amount, wallet.Balance.Currency);
+        return await _readService.GetBalanceAsync(request.WalletId, cancellationToken)
+            ?? throw new KeyNotFoundException($"Wallet {request.WalletId} no encontrada.");        
     }
 }

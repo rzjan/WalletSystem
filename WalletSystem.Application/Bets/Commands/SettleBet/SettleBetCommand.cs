@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace WalletSystem.Application.Bets.Commands.SettleBet;
 
-namespace WalletSystem.Application.Bets.Commands.SettleBet
+internal class SettleBetCommand
 {
-    internal class SettleBetCommand
-    {
-    }
 }
