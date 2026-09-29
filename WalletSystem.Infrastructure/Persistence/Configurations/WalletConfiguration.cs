@@ -14,7 +14,7 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
         builder.Property(w => w.Id).ValueGeneratedNever();
 
         builder.Property(w => w.UserId).IsRequired();
-        builder.HasIndex(w => w.UserId);
+        builder.HasIndex(w => w.UserId).IsUnique();
         builder.Property(w => w.CreatedAt).IsRequired();
 
         builder.OwnsOne(w => w.Balance, money =>
