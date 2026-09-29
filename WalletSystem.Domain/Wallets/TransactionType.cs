@@ -5,5 +5,7 @@ public enum TransactionType
     Deposit = 1,
     Withdrawal = 2,
     BetPlaced = 3,
-    PrizeCredited = 4
+    PrizeCredited = 4,
+    BetRefunded = 5
+
 }

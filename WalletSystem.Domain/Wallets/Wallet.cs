@@ -47,6 +47,9 @@ public class Wallet:Entity
     public Result<WalletTransaction> CreditPrize(Money amount, string idempotencyKey)
         => ApplyTransaction(amount, TransactionType.PrizeCredited, idempotencyKey);
 
+    public Result<WalletTransaction> RefundBet(Money amount, string idempotencyKey)
+        => ApplyTransaction(amount, TransactionType.BetRefunded, idempotencyKey);
+
     private Result<WalletTransaction> ApplyTransaction(
         Money amount,
         TransactionType type,

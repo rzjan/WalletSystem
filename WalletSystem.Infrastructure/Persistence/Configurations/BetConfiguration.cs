@@ -45,10 +45,10 @@ public class BetConfiguration : IEntityTypeConfiguration<Bet>
         // Referencia por Id en el dominio, pero la base igual garantiza integridad referencial
         builder.HasOne<Wallet>()
             .WithMany()
-            .HasForeignKey(b => b.WalletID)
+            .HasForeignKey(b => b.WalletId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(b => new { b.WalletID, b.IdempotencyKey }).IsUnique();
+        builder.HasIndex(b => new { b.WalletId, b.IdempotencyKey }).IsUnique();
 
         builder.Ignore(b => b.DomainEvents);
     }

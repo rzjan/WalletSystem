@@ -40,8 +40,8 @@ public class SettleBetCommandHandler : IRequestHandler<SettleBetCommand, SettleB
 
         if(request.OutCome == BetOutcome.Won)
         {
-            var wallet = await _walletRepository.GetByIdAsync(bet.WalletID, cancellationToken)
-                ?? throw new KeyNotFoundException($"Wallet {bet.WalletID} no encontrada.");
+            var wallet = await _walletRepository.GetByIdAsync(bet.WalletId, cancellationToken)
+                ?? throw new KeyNotFoundException($"Wallet {bet.WalletId} no encontrada.");
 
             var creditResult = wallet.CreditPrize(bet.Payout!, $"bet-{bet.Id}-prize");
             if (!creditResult.IsSuccess)

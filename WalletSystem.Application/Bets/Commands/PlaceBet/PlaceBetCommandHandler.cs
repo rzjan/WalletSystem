@@ -26,7 +26,7 @@ public class PlaceBetCommandHandler:IRequestHandler<PlaceBetCommand, PlaceBetRes
             request.WalletId, request.IdempotencyKey, cancellationToken);
         if (existingBet is not null)
         {
-            var existingWallet = await _walletRepository.GetByIdAsync(existingBet.WalletID, cancellationToken);
+            var existingWallet = await _walletRepository.GetByIdAsync(existingBet.WalletId, cancellationToken);
             return new PlaceBetResult(existingBet.Id, existingWallet!.Balance.Amount, existingBet.Status.ToString());
         }
         // 1) Cargar el primer aggregate

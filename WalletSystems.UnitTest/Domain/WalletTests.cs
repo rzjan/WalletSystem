@@ -159,4 +159,17 @@ public class WalletTests
         Assert.Empty(wallet.DomainEvents);
     }
 
+    [Fact]
+    public void RefundBet_ReturnsStakeToBalance()
+    {
+        var wallet = CreateWallet(initialBalance: 100);
+        var stake = Money.Create(40, "ARS").Value;
+        wallet.DebitForBet(stake, "bet-1");
+
+        var result = wallet.RefundBet(stake, "bet-1-refund");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(100, wallet.Balance.Amount);
+        Assert.Equal(TransactionType.BetRefunded, result.Value.Type);
+    }
 }

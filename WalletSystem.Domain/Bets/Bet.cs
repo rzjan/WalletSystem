@@ -7,7 +7,7 @@ namespace WalletSystem.Domain.Bets;
 public class Bet: Entity
 {
     public Guid Id { get; set; }
-    public Guid WalletID { get; private set; }
+    public Guid WalletId { get; private set; }
     //Apostar - El valor
     public Money Stake { get; private set; }
     // Cuotas de apuestas
@@ -26,7 +26,7 @@ public class Bet: Entity
                 string idempoTencyKey)
     {
         Id= Guid.NewGuid();
-        WalletID = walletId;
+        WalletId = walletId;
         Stake = stake;
         Odds = odds;
         Status = BetStatus.Placed;        
@@ -69,7 +69,7 @@ public class Bet: Entity
         SettledAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new BetSettledEvent(
-                    Id, WalletID, Status, 
+                    Id, WalletId, Status, 
                     Payout.Amount, Payout.Currency));
 
         return Result.Success();
@@ -86,7 +86,7 @@ public class Bet: Entity
         SettledAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new BetSettledEvent(
-                    Id, WalletID, Status,
+                    Id, WalletId, Status,
                     Payout.Amount, Payout.Currency));
 
         return Result.Success();
@@ -103,7 +103,7 @@ public class Bet: Entity
         Status = BetStatus.Cancelled;
         SettledAt = DateTime.UtcNow; //Fecha Liquidado o de operación
 
-        RaiseDomainEvent(new BetCancelledEvent(Id, WalletID));
+        RaiseDomainEvent(new BetCancelledEvent(Id, WalletId));
 
         return Result.Success();
     }
