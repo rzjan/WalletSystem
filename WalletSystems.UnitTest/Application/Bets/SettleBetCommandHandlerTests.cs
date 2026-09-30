@@ -22,8 +22,9 @@ public class SettleBetCommandHandlerTests
     //creo la wallet con 200, apuesta de 100 a cuota 2.5 ya debitada: saldo 100, premio potencial 250
     private (Wallet wallet, Bet bet) PlacedBetWithDebitedWallet()
     {
-        var wallet = Wallet.Create(Guid.NewGuid(), "ARS").Value;
-        wallet.Deposit(Money.Create(200, "ARS").Value, "seed");
+        var wallet = Wallet.Create(Guid.NewGuid(), "ARS").Value;        
+        var seed = wallet.RequestDeposit(Money.Create(200, "ARS").Value, "seed").Value;
+        wallet.CompletedDeposit(seed.Id);
 
         var stake = Money.Create(100, "ARS").Value;
         wallet.DebitForBet(stake, "bet-key");

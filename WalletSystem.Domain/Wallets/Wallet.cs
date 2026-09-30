@@ -35,9 +35,66 @@ public class Wallet:Entity
         return Result.Success(new Wallet(userId, currency));
     }
 
-    public Result<WalletTransaction> Deposit(Money amount, string idempotencyKey)
-        => ApplyTransaction(amount, TransactionType.Deposit, idempotencyKey);
+    //------- Depósito: Requiere confirmación de un proveedor externo, va en dos fases -------
+       
 
+    public Result<WalletTransaction> RequestDeposit(Money amount, string idempotencyKey)
+    {
+        var existing = _transactions.FirstOrDefault(t=> t.IdempotencyKey == idempotencyKey);
+        if (existing is not null)
+            return Result.Success(existing); //Pending, Completed o Failed de un intento anterior.
+
+        var transactionResult = WalletTransaction.Create(Id, amount, TransactionType.Deposit, idempotencyKey);
+        if (!transactionResult.IsSuccess)
+            return Result.Failure<WalletTransaction>(transactionResult.Error!);
+
+        var transaction = transactionResult.Value;
+        _transactions.Add(transaction);
+
+        RaiseDomainEvent(new WalletDepositRequestedEvent(transaction.Id, Id, amount.Amount, amount.Currency));
+        return Result.Success(transaction);
+    }
+
+    public Result<WalletTransaction>CompletedDeposit(Guid transactionId)
+    {
+        var transaction = _transactions.FirstOrDefault(t=> t.Id == transactionId);
+        if (transaction is null)
+            return Result.Failure<WalletTransaction>($"Transaction {transactionId} no encontrada.");
+
+        if (transaction.Status != TransactionStatus.Pending)
+            return Result.Failure<WalletTransaction>(
+                $"Solo se puede completar una transacción Pending. Estado actual: {transaction.Status}");
+
+        Balance = Balance.Add(transaction.Amount);
+        transaction.MarkAsCompleted();
+
+        RaiseDomainEvent(new WalletTransactionCompletedEvent(
+                transaction.Id, Id, transaction.Amount.Amount, transaction.Amount.Currency,
+                transaction.Type, Balance.Amount));
+
+        return Result.Success(transaction);
+    }
+
+    public Result<WalletTransaction> FailDeposit(Guid transactionId, string reason)
+    {
+        var transaction = _transactions.FirstOrDefault(t=> t.Id ==transactionId);
+        if (transaction is null)
+            return Result.Failure<WalletTransaction>($"Transacción {transactionId} no encontrada.");
+
+        if (transaction.Status == TransactionStatus.Failed)
+            return Result.Success(transaction); // idempotente
+
+        if (transaction.Status != TransactionStatus.Pending)
+            return Result.Failure<WalletTransaction>(
+                $"Solo se puede fallar una trasacción Pendind. Estado actual {transaction.Status}");
+
+        transaction.MarkAsFailed(reason);
+
+        RaiseDomainEvent(new WalletTransactionFailedEvent(transaction.Id, Id, reason));
+
+        return Result.Success(transaction);
+    }
+    // ------- resto de operacions: sincronas, no dependen de nada externo. --------
     public Result<WalletTransaction> Withdraw(Money amount, string idempotencyKey)
         => ApplyTransaction(amount,TransactionType.Withdrawal, idempotencyKey);
 

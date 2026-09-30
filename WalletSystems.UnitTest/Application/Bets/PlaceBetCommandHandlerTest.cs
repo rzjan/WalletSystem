@@ -22,8 +22,9 @@ public class PlaceBetCommandHandlerTest
     [Fact]
     public async Task Hanlde_WithNoExistingBet_DebitsWalletAndCreatesBet()
     {
-        var wallet = Wallet.Create(Guid.NewGuid(), "ARS").Value;
-        wallet.Deposit(Money.Create(200, "ARS").Value, "seed-deposit");
+        var wallet = Wallet.Create(Guid.NewGuid(), "ARS").Value;        
+        var seed = wallet.RequestDeposit(Money.Create(200, "ARS").Value, "seed-deposit").Value;
+        wallet.CompletedDeposit(seed.Id);
 
         var command = new PlaceBetCommand(wallet.Id, 100, "ARS", 2.5m, "bet-key-1");
 
@@ -44,8 +45,9 @@ public class PlaceBetCommandHandlerTest
     [Fact]
     public async Task Handle_WhenBetWithSameIdempotencyKeyAlreadyExists_ReturnsExistingBetWithoutTouchingWallet()
     {
-        var wallet = Wallet.Create(Guid.NewGuid(), "ARS").Value;
-        wallet.Deposit(Money.Create(200, "ARS").Value, "seed-deposit");
+        var wallet = Wallet.Create(Guid.NewGuid(), "ARS").Value;        
+        var seed = wallet.RequestDeposit(Money.Create(200, "ARS").Value, "seed-deposit").Value;
+        wallet.CompletedDeposit(seed.Id);
         wallet.DebitForBet(Money.Create(100, "ARS").Value, "bet-key-2"); // simula que ya se debitó antes
 
         var existingBet = Bet.Place(wallet.Id, Money.Create(100, "ARS").Value, Odds.Create(2.5m).Value, "bet-key-2").Value;
