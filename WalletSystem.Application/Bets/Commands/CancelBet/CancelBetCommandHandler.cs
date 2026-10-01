@@ -32,7 +32,8 @@ public class CancelBetCommandHandler : IRequestHandler<CancelBetCommand, CancelB
         if (!cancelResult.IsSuccess)
             throw new InvalidOperationException(cancelResult.Error);
 
-        var wallet = await _walletRepository.GetByIdAsync(bet.WalletId, cancellationToken)
+        var wallet = await _walletRepository.GetByIdForIdempotentOperationAsync(
+                    bet.WalletId,$"bet-{bet.Id}-refund", cancellationToken)
             ?? throw new KeyNotFoundException($"Wallet {bet.WalletId} no encontrada.");
 
         var refundResult = wallet.RefundBet(bet.Stake, $"bet-{bet.Id}-refund");

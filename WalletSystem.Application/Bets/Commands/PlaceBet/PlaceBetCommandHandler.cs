@@ -30,8 +30,9 @@ public class PlaceBetCommandHandler:IRequestHandler<PlaceBetCommand, PlaceBetRes
             return new PlaceBetResult(existingBet.Id, existingWallet!.Balance.Amount, existingBet.Status.ToString());
         }
         // 1) Cargar el primer aggregate
-        var wallet = await _walletRepository.GetByIdAsync(request.WalletId, cancellationToken)
-            ?? throw new KeyNotFoundException($"Wallet {request.WalletId} no encontrada.");
+        var wallet = await _walletRepository.GetByIdForIdempotentOperationAsync
+                                (request.WalletId,request.IdempotencyKey ,cancellationToken)
+                                 ?? throw new KeyNotFoundException($"Wallet {request.WalletId} no encontrada.");
 
         //2) Construir los value objects - Si algo es inválido, cortamos ANTES de tocar el salgo.
         var stakeResult = Money.Create(request.Stake, request.Currency);

@@ -26,8 +26,9 @@ public class DepositCommandHandler : IRequestHandler<DepositCommand, DepositResu
             CancellationToken cancellationToken)
     {
         //Obtiene la billetera (Wallet) existente
-        var wallet = await _walletRepository.GetByIdAsync(request.WalletID, cancellationToken)
-            ?? throw new KeyNotFoundException($"Wallet {request.WalletID} no encontrada.");
+        var wallet = await _walletRepository.GetByIdForIdempotentOperationAsync
+                    (request.WalletID, request.IdempotencyKey ,cancellationToken)
+                    ?? throw new KeyNotFoundException($"Wallet {request.WalletID} no encontrada.");
 
         //Construir el value object la moneda
         var amountResult = Money.Create(request.Amount, request.Currency);

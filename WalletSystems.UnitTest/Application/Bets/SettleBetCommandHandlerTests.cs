@@ -32,7 +32,7 @@ public class SettleBetCommandHandlerTests
         var bet = Bet.Place(wallet.Id, stake, Odds.Create(2.5m).Value, "bet-key").Value;
 
         _betRepository.GetByIdAsync(bet.Id, Arg.Any<CancellationToken>()).Returns(bet);
-        _walletRepository.GetByIdAsync(wallet.Id, Arg.Any<CancellationToken>()).Returns(wallet);
+        _walletRepository.GetByIdForIdempotentOperationAsync(wallet.Id, Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(wallet);
 
         return (wallet, bet);
     }
@@ -71,7 +71,7 @@ public class SettleBetCommandHandlerTests
 
         Assert.Equal(0, result.PayoutAmount);
         Assert.Equal(100, wallet.Balance.Amount);
-        await _walletRepository.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _walletRepository.DidNotReceive().GetByIdForIdempotentOperationAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

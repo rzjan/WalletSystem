@@ -32,7 +32,7 @@ public class PlaceBetCommandHandlerTest
         _betRepository.GetByIdempotencyKeyAsync(wallet.Id, "bet-key-1", Arg.Any<CancellationToken>())
             .Returns((Bet?)null);
 
-        _walletRepository.GetByIdAsync(wallet.Id, Arg.Any<CancellationToken>())
+        _walletRepository.GetByIdForIdempotentOperationAsync(wallet.Id, Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(wallet);
 
         var result = await _handler.Handle(command, CancellationToken.None);

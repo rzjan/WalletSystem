@@ -21,7 +21,8 @@ public class DepositCommandHandlerTests
     private Wallet WalletFor()
     {
         var wallet = Wallet.Create(Guid.NewGuid(), "ARS");
-        _walletRepository.GetByIdAsync(wallet.Value.Id, Arg.Any<CancellationToken>()).Returns(wallet.Value);
+        _walletRepository.GetByIdForIdempotentOperationAsync(
+                wallet.Value.Id, Arg.Any<string>(),Arg.Any<CancellationToken>()).Returns(wallet.Value);
         return wallet.Value;
     }
 
