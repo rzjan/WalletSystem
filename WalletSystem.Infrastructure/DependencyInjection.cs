@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Polly;
 using WalletSystem.Application.Common.Interfaces;
+using WalletSystem.Infrastructure.PaymentProvider;
 using WalletSystem.Infrastructure.Persistence;
 using WalletSystem.Infrastructure.Persistence.Outbox;
 using WalletSystem.Infrastructure.Persistence.ReadServices;
@@ -32,7 +35,18 @@ public static class DependencyInjection
         services.AddScoped<IWalletReadService, WalletReadService>();
         services.AddScoped<IBetReadService, BetReadService>();
 
-        // Quedan pendientes: IPaymentProviderClient (con Polly), IWalletReadService / IBetReadService (Dapper)
+        // Quedan pendientes:, IWalletReadService / IBetReadService (Dapper)
+        services.AddSingleton(sp => ResiliencePolicies.GetCombinedPolicy(
+                        sp.GetRequiredService<ILogger<PaymentProviderClient>>()
+                        ));
+
+        services.AddHttpClient<IPaymentProviderClient, PaymentProviderClient>((sp, client) =>
+        {
+            client.BaseAddress = new Uri(configuration["PaymentProvider:BaseUrl"]
+                ?? throw new InvalidOperationException("Falta 'PaymentProvider:BaseUrl' en configuración."));
+            client.Timeout = TimeSpan.FromSeconds(10); // techo del HttpClient en sí, por encima del timeout de Polly
+        })
+        .AddPolicyHandler((sp, _) => sp.GetRequiredService<IAsyncPolicy<HttpResponseMessage>>());
 
         return services;
     }
