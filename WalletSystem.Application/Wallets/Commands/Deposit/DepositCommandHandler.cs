@@ -54,7 +54,12 @@ public class DepositCommandHandler : IRequestHandler<DepositCommand, DepositResu
                                 amountResult.Value.Amount, amountResult.Value.Currency,
                                 request.IdempotencyKey, cancellationToken);
 
-        var settleResult = chargetResult.IsSuccess
+        //No sabemos si se cobró: la transacción sigue pendind y la resuelve la reconciliación. Si se cobró, el job de reconciliación.
+        // (o un reintento del mismo comando, que reusa la misma clave ante el proveedor).
+        if (chargetResult.Outcome == PaymentOutcome.Indeterminate)
+            return ToResult(transaction, wallet.Balance.Amount);
+
+        var settleResult = chargetResult.Outcome == PaymentOutcome.Approved
             ? wallet.CompletedDeposit(transaction.Id)
             : wallet.FailDeposit(transaction.Id, chargetResult.ErrorMessage ?? "El proveedor de pagos rechazó la operación.");
 

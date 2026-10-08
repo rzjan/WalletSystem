@@ -20,5 +20,10 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="WalletSystems.UnitTest/WalletSystems.UnitTest.csproj" Id="03a883f5-3b50-475b-beed-5b5bca6bd87c" />
+  </Folder>
+  <Folder Name="/tools/" />
+  <Folder Name="/tools/WalletSystem.FakePaymentProvider/">
+    <File Path="Program.cs" />
+    <File Path="WalletSystem.FakePaymentProvider.csproj" />
   </Folder>  
 </Solution>

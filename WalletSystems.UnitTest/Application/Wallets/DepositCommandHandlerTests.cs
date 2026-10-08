@@ -31,7 +31,7 @@ public class DepositCommandHandlerTests
     {
         var wallet = WalletFor();
         _paymentProviderClient.ChargeAsync(100, "ARS", "key-1", Arg.Any<CancellationToken>())
-            .Returns(new PaymentProviderResult(true, "ext-123", null));
+            .Returns(PaymentProviderResult.Approved("ext-123"));
 
         var result = await _handler.Handle(
                 new DepositCommand(wallet.Id, 100, "ARS", "key-1"), CancellationToken.None);
@@ -44,7 +44,7 @@ public class DepositCommandHandlerTests
     {
         var wallet = WalletFor();
         _paymentProviderClient.ChargeAsync(100, "ARS", "key-2", Arg.Any<CancellationToken>())
-            .Returns(new PaymentProviderResult(false, null, "Tarjeta rechazada"));
+            .Returns(PaymentProviderResult.Declined("Tarjeta rechazada"));
 
         var result = await _handler.Handle(
             new DepositCommand(wallet.Id, 100, "ARS", "key-2"), CancellationToken.None);
@@ -66,6 +66,43 @@ public class DepositCommandHandlerTests
         Assert.Equal("Completed", result.Status);
         await _paymentProviderClient.DidNotReceive()
             .ChargeAsync(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WhenProviderOutcomeIsUnknown_LeavesDepositPendingAndDoesNotFailIt()
+    {
+        var wallet = WalletFor();
+        _paymentProviderClient.ChargeAsync(100, "ARS", "key-4", Arg.Any<CancellationToken>())
+            .Returns(PaymentProviderResult.Indeterminate("Timeout"));
+
+        var result = await _handler.Handle(
+            new DepositCommand(wallet.Id, 100, "ARS", "key-4"), CancellationToken.None);
+
+        Assert.Equal("Pending", result.Status);
+        Assert.Equal(0, result.NewBalance);
+        Assert.Equal(TransactionStatus.Pending, wallet.Transactions.Single().Status);
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>()); // solo el Pending
+    }
+
+    [Fact]
+    public async Task Handle_WhenRetriedWhilePending_CallsProviderAgainWithSameKeyAndCompletes()
+    {
+        var wallet = WalletFor();
+        _paymentProviderClient.ChargeAsync(100, "ARS", "key-5", Arg.Any<CancellationToken>())
+            .Returns(
+                PaymentProviderResult.Indeterminate("Timeout"),   // primer intento: no sabemos
+                PaymentProviderResult.Approved("ext-999"));       // el proveedor devuelve el resultado original
+
+        var command = new DepositCommand(wallet.Id, 100, "ARS", "key-5");
+
+        var first = await _handler.Handle(command, CancellationToken.None);
+        var second = await _handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal("Pending", first.Status);
+        Assert.Equal("Completed", second.Status);
+        Assert.Equal(100, second.NewBalance);
+        await _paymentProviderClient.Received(2)
+            .ChargeAsync(100, "ARS", "key-5", Arg.Any<CancellationToken>());
     }
 
 }
