@@ -9,6 +9,7 @@ public class WalletDbContextFactory : IDesignTimeDbContextFactory<WalletDbContex
 {
     public WalletDbContext CreateDbContext(string[] args)
     {
+
         var connectionString = Environment.GetEnvironmentVariable("WALLET_DB_CONNECTION")
             ?? throw new InvalidOperationException(
                 "Definí la variable de entorno WALLET_DB_CONNECTION antes de usar dotnet ef.");
