@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/Elementos de la solución/">
+    <File Path=".env" />
+    <File Path=".env.example" />
+    <File Path="docker-compose.yml" />
+  </Folder>
   <Folder Name="/frontend/" />
   <Folder Name="/frontend/wallet-dashboard/" />
   <Folder Name="/frontend/wallet-dashboard/src/" />
