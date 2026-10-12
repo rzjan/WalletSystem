@@ -1,5 +1,4 @@
-# WalletSystem  ![Estado del Proyecto](https://shields.io)
-
+# WalletSystem  
 Sistema de **billetera virtual y apuestas** (dominio de lotería) construido en **.NET 8** con **Clean Architecture** y **DDD**. El objetivo es resolver los problemas reales de un sistema transaccional de alta demanda: **consistencia, idempotencia, resiliencia ante fallas de un proveedor de pagos externo y entrega confiable de eventos**.
 
 > Proyecto de práctica / portfolio. El foco no es la cantidad de features, sino las decisiones de arquitectura y por qué se tomaron.
