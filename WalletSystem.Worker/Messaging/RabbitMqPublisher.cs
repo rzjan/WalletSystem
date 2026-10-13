@@ -1,19 +1,23 @@
 ﻿using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using WalletSystem.Worker.Consumer;
 using WalletSystem.Worker.Outbox;
 
 namespace WalletSystem.Worker.Messaging;
 
 public sealed class RabbitMqPublisher : IDisposable
 {
-    private readonly RabbitMqOptions _opstions;
+    private readonly RabbitMqOptions _options;
+    private readonly ConsumerOptions _consumerOptions;
     private readonly object _lock = new object();
     private IConnection? _connection;
     private IModel? _channel;
 
-    public RabbitMqPublisher(IOptions<RabbitMqOptions> options)
-        => _opstions = options.Value;
-
+    public RabbitMqPublisher(IOptions<RabbitMqOptions> options, IOptions<ConsumerOptions> consumerOptions)
+    {
+        _options = options.Value;
+        _consumerOptions = consumerOptions.Value;
+    }
 
     //Publica todo el lote y esperaa UNA sola confirmación del broker.
     // Si lanza excepcion, el llamador no marca nada como procesado (at-least-once).
@@ -46,24 +50,12 @@ public sealed class RabbitMqPublisher : IDisposable
         if (_channel is { IsOpen: true }) return _channel;
         _channel?.Dispose();
         _connection?.Dispose();
-        var factory = new ConnectionFactory
-        {
-            HostName = _opstions.HostName,
-            Port = _opstions.Port,
-            UserName = _opstions.UserName,
-            Password = _opstions.Password,
-            AutomaticRecoveryEnabled = true
-        };
-
-        _connection = factory.CreateConnection("wallet-outbox-publisher");
+        
+        _connection = _options.ToConnectionFactory().CreateConnection("wallet-outbox-publisher");        
         _channel = _connection.CreateModel();
         _channel.ConfirmSelect(); // Activa publisher confirms
-        
-        _channel.ExchangeDeclare(_opstions.Exchange, ExchangeType.Topic, durable: true);
-        //Cola temporal de inspección: engancha TODO para poder verlo en la UI
-        _channel.QueueDeclare("wallet-events-debug", durable: true, exclusive: false, autoDelete: false);
-        _channel.QueueBind("wallet-events-debug", _opstions.Exchange, "#");
 
+        RabbitTopology.Declare(_channel, _options, _consumerOptions);
         return _channel;
     }
     public void Dispose()

@@ -125,6 +125,25 @@ namespace WalletSystem.Infrastructure.Persistence.Migrations
                     b.ToTable("WalletTransactions", (string)null);
                 });
 
+            modelBuilder.Entity("WalletSystem.Infrastructure.Persistence.Inbox.InboxMessage", b =>
+                {
+                    b.Property<string>("ConsumerNamer")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ProcessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ConsumerNamer", "MessageId");
+
+                    b.HasIndex("ProcessedAt");
+
+                    b.ToTable("InboxMessages", (string)null);
+                });
+
             modelBuilder.Entity("WalletSystem.Infrastructure.Persistence.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
